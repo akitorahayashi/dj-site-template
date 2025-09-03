@@ -12,13 +12,13 @@ services:
       target: development
     env_file:
       - .env
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DEV_DB_NAME}
+      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
     volumes:
       - .:/app
       - /app/.venv
-    environment:
-      - DEBUG=True
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DEV_DB_NAME}
-      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
 
   nginx:
     ports:

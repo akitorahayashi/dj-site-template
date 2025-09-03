@@ -11,13 +11,17 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_HOST_DB_NAME}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_HOST_DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "python -c \"import os,sys,urllib.request; url=f'http://localhost:8000{os.getenv('HEALTHCHECK_PATH','/health/')}'; r=urllib.request.urlopen(url, timeout=5); sys.exit(0 if getattr(r,'status',200)==200 else 1)\"" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
+    expose:
+      - "8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   db:
     image: postgres:16-alpine

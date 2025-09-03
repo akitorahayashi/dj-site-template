@@ -10,15 +10,11 @@ services:
   web:
     build:
       target: development
-    ports:
-      - "${WEB_HOST}:${TEST_PORT}:8000"
     environment:
       - DEBUG=True
+      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB_NAME}
       - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
-    volumes:
-      - .:/app
-      - /app/.venv
 
   nginx:
     ports:

@@ -17,7 +17,7 @@ def postgres_container():
     """
     Provides a PostgreSQL container for database tests.
     """
-    load_dotenv(".env.test", override=True)
+    load_dotenv(".env", override=True)
 
     db_user = os.getenv("DB_USER", "django_user")
     db_password = os.getenv("DB_PASSWORD", "django_password")

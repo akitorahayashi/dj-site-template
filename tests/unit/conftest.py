@@ -17,5 +17,5 @@ def unit_test_setup():
     Unit tests should not require external services, so we only
     load environment variables for configuration if needed.
     """
-    load_dotenv(".env.test", override=True)
+    load_dotenv(".env", override=True)
     yield
