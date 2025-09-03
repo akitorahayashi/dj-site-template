@@ -46,8 +46,8 @@ help: ## Show this help message
 
 .PHONY: setup
 setup: ## Install dependencies and create .env files from .env.example
-	@echo "Installing python dependencies with Poetry..."
-	@poetry install
+	@echo "🐍 Installing python dependencies with uv..."
+	@uv sync --extra dev
 	@echo "Creating .env files..."
 	@for env in dev prod test; do \
 		if [ ! -f .env.$$env ] && [ -f .env.example ]; then \
@@ -119,19 +119,19 @@ shell: ## Start a shell inside the dev 'web' container
 .PHONY: makemigrations
 makemigrations: ## [DEV] Create new migration files
 	@ln -sf .env.dev .env
-	@$(DEV_COMPOSE) exec web poetry run python manage.py makemigrations
+	@$(DEV_COMPOSE) exec web python manage.py makemigrations
 
 .PHONY: migrate
 migrate: ## [DEV] Run database migrations
 	@ln -sf .env.dev .env
 	@echo "Running DEV database migrations..."
-	@$(DEV_COMPOSE) exec web poetry run python manage.py migrate
+	@$(DEV_COMPOSE) exec web python manage.py migrate
 
 .PHONY: superuser
 superuser: ## [DEV] Create a Django superuser
 	@ln -sf .env.dev .env
 	@echo "Creating DEV superuser..."
-	@$(DEV_COMPOSE) exec web poetry run python manage.py createsuperuser
+	@$(DEV_COMPOSE) exec web python manage.py createsuperuser
 
 .PHONY: migrate-prod
 migrate-prod: ## [PROD] Run database migrations in production-like environment
@@ -152,15 +152,15 @@ superuser-prod: ## [PROD] Create a Django superuser in production-like environme
 .PHONY: format
 format: ## Format code with Black and fix Ruff issues
 	@echo "Formatting code with Black and Ruff..."
-	@poetry run black .
-	@poetry run ruff check . --fix
+	@black .
+	@ruff check . --fix
 
 .PHONY: lint
 lint: ## Check code format and lint issues
 	@echo "Checking code format with Black..."
-	@poetry run black --check .
+	@black --check .
 	@echo "Checking code with Ruff..."
-	@poetry run ruff check .
+	@ruff check .
 
 # ==============================================================================
 #  Testing
@@ -172,13 +172,13 @@ test: unit-test build-test db-test e2e-test ## Run the full test suite
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
-	@poetry run pytest tests/unit
+	@pytest tests/unit
 
 .PHONY: db-test
 db-test: ## Run the slower, database-dependent tests locally
 	@echo "Running database tests..."
 	@ln -sf .env.test .env
-	@poetry run python -m pytest tests/db
+	@python -m pytest tests/db
 	
 .PHONY: build-test
 build-test: ## Build Docker image and run smoke tests in clean environment
@@ -194,7 +194,7 @@ build-test: ## Build Docker image and run smoke tests in clean environment
 		-v $(CURDIR)/manage.py:/app/manage.py \
 		-v $(CURDIR)/pyproject.toml:/app/pyproject.toml \
 		$(TEST_PROJECT_NAME):test \
-		sh -c "poetry run python -m pytest tests/unit/" || (echo "Smoke tests failed"; exit 1)
+		sh -c "python -m pytest tests/unit/" || (echo "Smoke tests failed"; exit 1)
 	@echo "Cleaning up test image..."
 	@$(DOCKER_CMD) rmi $(TEST_PROJECT_NAME):test || true
 
@@ -202,7 +202,7 @@ build-test: ## Build Docker image and run smoke tests in clean environment
 e2e-test: ## Run end-to-end tests against a live application stack
 	@echo "Running end-to-end tests..."
 	@ln -sf .env.test .env
-	@poetry run python -m pytest tests/e2e
+	@python -m pytest tests/e2e
 
 
 
