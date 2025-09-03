@@ -1,8 +1,8 @@
 # Django Project Template
 
-This is a comprehensive Django project template designed to be a starting point for various web applications. It comes with modern development practices, including Docker, Makefile, and a CI/CD pipeline using GitHub Actions.
+This is a comprehensive Django project template designed to be a starting point for various web applications.
 
-## ✅ Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following tools installed:
 
@@ -12,7 +12,7 @@ Before you begin, ensure you have the following tools installed:
 - **Python**: 3.12 (recommended, see `.python-version`)
 - **Poetry**: 1.8.3 or compatible (for local development)
 
-## 🚀 Getting Started
+## Getting Started
 
 To start your new project, clone this repository. Then, to set up the local environment and install dependencies using Poetry, run:
 
@@ -21,7 +21,7 @@ make setup
 ```
 This command will also create the necessary `.env` files from the example file.
 
-## 🐳 Building and Running with Docker
+## Building and Running with Docker
 
 The application is designed to run inside Docker containers. To build and start the containers in the background, use:
 
@@ -45,32 +45,23 @@ make up-prod
 ```
 
 > **⚠️ Important**
-> Before running `make up-prod`, you must copy `.env.example` to `.env.prod` and configure the production-specific environment variables. The `.env.prod` file is ignored by Git.
+> Before running `make up-prod`, you must run `make setup` and configure the production-specific environment variables. The `.env` file is ignored by Git.
 
 To stop and remove the production-like containers:
 ```bash
 make down-prod
 ```
 
-## ✅ Testing and Code Quality
+## Testing and Code Quality
 
 The project is equipped with tools to maintain code quality, including tests, a linter, and a formatter.
 
 ### Running Tests
 
-There are several ways to run tests:
-
-1.  **Using the Make command (recommended for local testing):**
-    ```bash
-    make test
-    ```
-    This runs the tests inside the Docker container.
-
-2.  **Directly inside the Docker container:**
-    Make sure the containers are running (`make up`), then execute:
-    ```bash
-    docker compose exec web poetry run pytest
-    ```
+```bash
+make test
+```
+This runs the all tests.
 
 ### Code Formatting and Linting
 
@@ -83,11 +74,10 @@ make format
 
 To check for linting and formatting issues (as the CI pipeline does):
 ```bash
-make lint-check
-make format-check
+make lint
 ```
 
-## 📂 Project Structure
+## Project Structure
 
 A key feature of this template is how Django apps are organized.
 
@@ -95,27 +85,3 @@ A key feature of this template is how Django apps are organized.
 -   **Namespace Package**: The `apps/` directory is configured as a [PEP 420 namespace package](https://www.python.org/dev/peps/pep-0420/), meaning it does **not** contain an `__init__.py` file. This allows for better separation of concerns and makes it easier to add or remove apps.
 -   **Packaging**: The `pyproject.toml` file is configured to include the entire `apps` directory in the distribution.
 
-## 🛠 Makefile Commands
-
-A list of all available commands can be viewed by running `make help`. Here is an overview of the main commands:
-
-| Command              | Description                                                                 |
-| --------------------- | --------------------------------------------------------------------------- |
-| `make setup`          | Creates `.env.dev` and `.env.prod` from `.env.example`.                     |
-| `make up`             | Builds and starts the development Docker containers.                        |
-| `make down`           | Stops and removes the development Docker containers.                        |
-| `make rebuild`        | Rebuilds development containers without cache and restarts them.            |
-| `make logs`           | Shows the logs for the development containers.                              |
-| `make shell`          | Opens a shell inside the `web` container for development.                   |
-| `make up-prod`        | Builds and starts the production-like Docker containers.                    |
-| `make down-prod`      | Stops and removes the production-like Docker containers.                    |
-| `make migrate`        | Runs database migrations in the development environment.                    |
-| `make makemigrations` | Creates new migration files based on model changes.                         |
-| `make superuser`      | Creates a Django superuser in the development environment.                  |
-| `make migrate-prod`   | Runs database migrations in the production environment.                     |
-| `make superuser-prod` | Creates a Django superuser in the production environment.                   |
-| `make test`           | Runs the test suite inside the `web` container.                             |
-| `make format`         | Formats the code using `black` and `ruff`.                                  |
-| `make lint-check`     | Checks for linting errors with `ruff`.                                      |
-| `make clean`          | Stops all containers and cleans up generated files.                         |
-| `make help`           | Displays a list of all available commands and their descriptions.           |
