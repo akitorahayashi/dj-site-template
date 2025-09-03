@@ -11,10 +11,9 @@ services:
     build:
       target: development
     ports:
-      - "${WEB_HOST:-127.0.0.1}:${TEST_PORT:-8002}:8000"
+      - "${WEB_HOST}:${TEST_PORT}:8000"
     environment:
       - DEBUG=True
-      - DJANGO_SETTINGS_MODULE=config.settings.test
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB_NAME}
       - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
     volumes:
@@ -23,9 +22,9 @@ services:
 
   nginx:
     ports:
-      - "${WEB_HOST:-127.0.0.1}:${TEST_PORT:-8002}:80"
+      - "${WEB_HOST}:${TEST_PORT}:80"
 
 volumes:
   postgres-db:
-    name: ${PROJECT_NAME:-dj-site-tmpl}-postgres-db-test
+    name: ${PROJECT_NAME}-postgres-db-test
     external: false

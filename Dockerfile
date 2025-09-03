@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install uv
 
 # Copy dependency definition files
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock ./
 
 
 # ==============================================================================

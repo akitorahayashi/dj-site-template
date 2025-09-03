@@ -163,7 +163,7 @@ db-test: ## Run the slower, database-dependent tests locally
 .PHONY: build-test
 build-test: ## Build Docker image and run smoke tests in clean environment
 	@echo "Building Docker image and running smoke tests..."
-	@$(DOCKER_CMD) build --target builder -t test-build:temp . || (echo "Docker build failed"; exit 1)
+	@$(DOCKER_CMD) build --target dev-deps -t test-build:temp . || (echo "Docker build failed"; exit 1)
 	@echo "Running smoke tests in Docker container..."
 	@$(DOCKER_CMD) run --rm \
 		--env-file .env \
@@ -172,8 +172,9 @@ build-test: ## Build Docker image and run smoke tests in clean environment
 		-v $(CURDIR)/config:/app/config \
 		-v $(CURDIR)/manage.py:/app/manage.py \
 		-v $(CURDIR)/pyproject.toml:/app/pyproject.toml \
+		-e PATH="/app/.venv/bin:$$PATH" \
 		test-build:temp \
-		sh -c "python -m pytest tests/unit/" || (echo "Smoke tests failed"; exit 1)
+		sh -c "/app/.venv/bin/python -m pytest tests/unit/" || (echo "Smoke tests failed"; exit 1)
 	@echo "Cleaning up test image..."
 	@$(DOCKER_CMD) rmi test-build:temp || true
 

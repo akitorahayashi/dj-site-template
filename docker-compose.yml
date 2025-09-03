@@ -39,7 +39,7 @@ services:
     build:
       context: ./nginx
     ports:
-      - "${WEB_HOST:-127.0.0.1}:${HOST_PORT:-8000}:80"
+      - "${WEB_HOST}:${HOST_PORT}:80"
     volumes:
       - static-volume:/app/static
     depends_on:
@@ -49,8 +49,8 @@ services:
 
 volumes:
   postgres-db:
-    name: ${PROJECT_NAME:-dj-site-tmpl}-postgres-db-prod
+    name: ${PROJECT_NAME}-postgres-db-prod
     external: false
   static-volume:
-    name: ${PROJECT_NAME:-dj-site-tmpl}-static-volume
+    name: ${PROJECT_NAME}-static-volume
     external: false
