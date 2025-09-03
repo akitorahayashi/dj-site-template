@@ -23,7 +23,7 @@ jobs:
         run: pipx install uv
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --frozen
 
       - name: Create .env file for CI
         run: cp .env.example .env

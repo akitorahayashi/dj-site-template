@@ -1,0 +1,30 @@
+# Development override - includes live code reloading
+# Environment variables are loaded from .env file
+services:
+  db:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DEV_DB_NAME}" ]
+
+  web:
+    build:
+      target: development
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DEV_DB_NAME}
+
+  nginx:
+    ports:
+      - "${WEB_HOST:-127.0.0.1}:${DEV_PORT:-8001}:80"
+
+volumes:
+  postgres-db:
+    name: ${PROJECT_NAME:-dj-site-tmpl}-postgres-db-dev
+    external: false

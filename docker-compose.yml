@@ -7,40 +7,50 @@ services:
     restart: unless-stopped
     volumes:
       - static-volume:/app/static
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-django_db}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_HOST_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"import os,sys,urllib.request; url=f'http://localhost:8000{os.getenv('HEALTHCHECK_PATH','/health/')}'; r=urllib.request.urlopen(url, timeout=5); sys.exit(0 if getattr(r,'status',200)==200 else 1)\"" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   db:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-django_db}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    image: postgres:16-alpine
     volumes:
-      - db-volume:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - postgres-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_HOST_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_HOST_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
 
   nginx:
     build:
       context: ./nginx
     ports:
-      - "${HOST_BIND_IP:-127.0.0.1}:${HOST_PORT:-50080}:80"
+      - "${WEB_HOST:-127.0.0.1}:${HOST_PORT:-8000}:80"
     volumes:
       - static-volume:/app/static
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
+  postgres-db:
+    name: ${PROJECT_NAME:-dj-site-tmpl}-postgres-db-prod
+    external: false
   static-volume:
+    name: ${PROJECT_NAME:-dj-site-tmpl}-static-volume
     external: false
-    name: ${PROJECT_NAME}-static-volume
-  db-volume:
-    external: false
-    name: ${COMPOSE_PROJECT_NAME}-db-volume

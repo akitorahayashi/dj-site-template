@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install uv
 
 # Copy dependency definition files
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock README.md ./
 
 
 # ==============================================================================
@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/l
 
 # Install all dependencies, including development ones
 RUN --mount=type=cache,target=/root/.cache \
-    uv sync --extra dev
+    uv sync
 
 
 # ==============================================================================
