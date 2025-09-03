@@ -29,6 +29,11 @@ if env_path.is_file():
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("DEBUG", "False").lower() == "true":
+        SECRET_KEY = "dev-insecure-secret-key"
+    else:
+        raise RuntimeError("SECRET_KEY must be set when DEBUG=False")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
