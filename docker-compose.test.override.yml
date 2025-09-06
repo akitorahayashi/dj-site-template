@@ -17,10 +17,11 @@ services:
       - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
 
   nginx:
-    ports:
+    ports: !override
       - "${WEB_HOST}:${TEST_PORT}:80"
 
 volumes:
   postgres-db:
+    driver: local
     name: ${PROJECT_NAME}-postgres-db-test
     external: false
