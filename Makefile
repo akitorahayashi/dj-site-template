@@ -25,8 +25,10 @@ endif
 
 DOCKER_CMD := $(SUDO_PREFIX) docker
 
+-include .env
+
 # Define the project name - try to read from .env file, fallback to directory name
-PROJECT_NAME := $(shell if [ -f .env ]; then grep "^PROJECT_NAME=" .env | cut -d'=' -f2; else basename $(CURDIR); fi)
+PROJECT_NAME ?= dj-site-tmpl
 
 # Define project names for different environments
 DEV_PROJECT_NAME := $(PROJECT_NAME)-dev
@@ -65,21 +67,22 @@ setup: ## Initialize project: install dependencies, create .env file and pull re
 	@if [ ! -f .env ] && [ -f .env.example ]; then \
 		echo "Creating .env from .env.example..."; \
 		cp .env.example .env; \
+		echo "✅ Environment file created (.env)"; \
 	else \
 		echo ".env already exists. Skipping creation."; \
 	fi
-	@echo "✅ Environment file created (.env)"
 	@echo "💡 You can customize .env for your specific needs:"
 	@echo "   📝 Change database settings if needed"
 	@echo "   📝 Adjust other settings as needed"
 	@echo ""
 	@echo "Pulling PostgreSQL image for development..."
-	@if [ -f .env ]; then \
-		POSTGRES_IMAGE=$$(grep "^POSTGRES_IMAGE=" .env | cut -d'=' -f2); \
-		$(DOCKER_CMD) pull $$POSTGRES_IMAGE; \
-	else \
-		$(DOCKER_CMD) pull postgres:16-alpine; \
-	fi
+	@POSTGRES_IMAGE="postgres:16-alpine"; \
+	if [ -f .env ] && grep -q "^POSTGRES_IMAGE=" .env; then \
+		POSTGRES_IMAGE=$$(sed -n 's/^POSTGRES_IMAGE=\(.*\)/\1/p' .env | head -n1 | tr -d '\r'); \
+		[ -z "$$POSTGRES_IMAGE" ] && POSTGRES_IMAGE="postgres:16-alpine"; \
+	fi; \
+	echo "Using POSTGRES_IMAGE=$$POSTGRES_IMAGE"; \
+	$(DOCKER_CMD) pull "$$POSTGRES_IMAGE"
 	@echo "✅ Setup complete. Dependencies are installed and .env file is ready."
 
 # ==============================================================================
