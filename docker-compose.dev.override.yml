@@ -21,10 +21,11 @@ services:
       - /app/.venv
 
   nginx:
-    ports:
+    ports: !override
       - "${WEB_HOST}:${DEV_PORT}:80"
 
 volumes:
   postgres-db:
+    driver: local
     name: ${PROJECT_NAME}-postgres-db-dev
     external: false

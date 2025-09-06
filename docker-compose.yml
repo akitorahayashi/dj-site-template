@@ -24,7 +24,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   db:
-    image: postgres:16-alpine
+    image: ${POSTGRES_IMAGE}
     volumes:
       - postgres-db:/var/lib/postgresql/data
     environment:
@@ -53,8 +53,10 @@ services:
 
 volumes:
   postgres-db:
+    driver: local
     name: ${PROJECT_NAME}-postgres-db-prod
     external: false
   static-volume:
+    driver: local
     name: ${PROJECT_NAME}-static-volume
     external: false

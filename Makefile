@@ -1,10 +1,23 @@
+# ==============================================================================
+# Makefile for Django Project Automation
+#
+# Provides a unified interface for common development tasks, abstracting away
+# the underlying Docker Compose commands for a better Developer Experience (DX).
+#
+# Inspired by the self-documenting Makefile pattern.
+# See: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+# ==============================================================================
+
+# Default target executed when 'make' is run without arguments
 .DEFAULT_GOAL := help
 
 # ==============================================================================
-# Variables
+# Sudo Configuration
+#
+# Allows running Docker commands with sudo when needed (e.g., in CI environments).
+# Usage: make up SUDO=true
 # ==============================================================================
 
-# Sudo Configuration - Allows running Docker commands with sudo when needed
 SUDO_PREFIX :=
 ifeq ($(SUDO),true)
 	SUDO_PREFIX := sudo
@@ -12,44 +25,62 @@ endif
 
 DOCKER_CMD := $(SUDO_PREFIX) docker
 
+# Define the project name - try to read from .env file, fallback to directory name
+PROJECT_NAME := $(shell if [ -f .env ]; then grep "^PROJECT_NAME=" .env | cut -d'=' -f2; else basename $(CURDIR); fi)
+
+# Define project names for different environments
+DEV_PROJECT_NAME := $(PROJECT_NAME)-dev
+PROD_PROJECT_NAME := $(PROJECT_NAME)-prod
+TEST_PROJECT_NAME := $(PROJECT_NAME)-test
+
 # ==============================================================================
-# Docker Commands
+# Docker Compose Commands
 # ==============================================================================
 
-DEV_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml -f docker-compose.dev.override.yml
-PROD_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml  
-TEST_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml -f docker-compose.test.override.yml
+DEV_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml -f docker-compose.dev.override.yml --project-name $(DEV_PROJECT_NAME)
+PROD_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml --project-name $(PROD_PROJECT_NAME)
+TEST_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml -f docker-compose.test.override.yml --project-name $(TEST_PROJECT_NAME)
 
 # ==============================================================================
-# Help
+# HELP
 # ==============================================================================
-
-.PHONY: all
-all: help ## Default target
 
 .PHONY: help
 help: ## Show this help message
-	@echo "Usage: make [target]"
-	@echo ""
+	@echo "Usage: make [target] [VAR=value]"
+	@echo "Options:"
+	@echo "  \033[36m%-15s\033[0m %s" "SUDO=true" "Run docker commands with sudo (e.g., make up SUDO=true)"
 	@echo "Available targets:"
-	@awk 'BEGIN {FS = ":.*?## "; OFS=" "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # ==============================================================================
 # Environment Setup
 # ==============================================================================
 
 .PHONY: setup
-setup: ## Install dependencies and create .env file from .env.example
-	@echo "🐍 Installing python dependencies with uv..."
+setup: ## Initialize project: install dependencies, create .env file and pull required Docker images
+	@echo "Installing python dependencies with uv..."
 	@uv sync
-	@echo "Creating .env file..."
+	@echo "Creating environment file..."
 	@if [ ! -f .env ] && [ -f .env.example ]; then \
 		echo "Creating .env from .env.example..."; \
 		cp .env.example .env; \
 	else \
 		echo ".env already exists. Skipping creation."; \
 	fi
-	@echo "Setup complete. Dependencies are installed and .env file is ready."
+	@echo "✅ Environment file created (.env)"
+	@echo "💡 You can customize .env for your specific needs:"
+	@echo "   📝 Change database settings if needed"
+	@echo "   📝 Adjust other settings as needed"
+	@echo ""
+	@echo "Pulling PostgreSQL image for development..."
+	@if [ -f .env ]; then \
+		POSTGRES_IMAGE=$$(grep "^POSTGRES_IMAGE=" .env | cut -d'=' -f2); \
+		$(DOCKER_CMD) pull $$POSTGRES_IMAGE; \
+	else \
+		$(DOCKER_CMD) pull postgres:16-alpine; \
+	fi
+	@echo "✅ Setup complete. Dependencies are installed and .env file is ready."
 
 # ==============================================================================
 # Development Environment Commands
@@ -94,9 +125,9 @@ logs: ## Show and follow dev container logs
 
 .PHONY: shell
 shell: ## Start a shell inside the dev 'web' container
-	@$(DEV_COMPOSE) ps --status=running --services | grep -q '^web$$' || { echo "Error: web container is not running. Please run 'make up' first." >&2; exit 1; }
-	@echo "Connecting to DEV 'web' container shell..."
-	@$(DEV_COMPOSE) exec web /bin/bash
+	@echo "Opening shell in dev web container..."
+	@$(DEV_COMPOSE) exec web /bin/bash || \
+		(echo "Failed to open shell. Is the container running? Try 'make up'" && exit 1)
 
 # ==============================================================================
 # Django Management Commands
@@ -127,24 +158,23 @@ superuser-prod: ## [PROD] Create a Django superuser in production-like environme
 	@$(PROD_COMPOSE) exec web python manage.py createsuperuser
 
 # ==============================================================================
-#  Code Quality
+# CODE QUALITY 
 # ==============================================================================
 
 .PHONY: format
-format: ## Format code with Black and fix Ruff issues
-	@echo "Formatting code with Black and Ruff..."
-	@black .
-	@ruff check . --fix
+format: ## Format code with black and ruff --fix
+	@echo "Formatting code with black and ruff..."
+	black .
+	ruff check . --fix
 
 .PHONY: lint
-lint: ## Check code format and lint issues
-	@echo "Checking code format with Black..."
-	@black --check .
-	@echo "Checking code with Ruff..."
-	@ruff check .
+lint: ## Lint code with black check and ruff
+	@echo "Linting code with black check and ruff..."
+	black --check .
+	ruff check .
 
 # ==============================================================================
-#  Testing
+# TESTING
 # ==============================================================================
 
 .PHONY: test
