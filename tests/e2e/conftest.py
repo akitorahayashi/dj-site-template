@@ -1,100 +1,81 @@
-import os
-import subprocess
-import time
-from typing import Generator
+"""
+End-to-end test configuration.
 
-import httpx
+Spins up the entire application stack using testcontainers.
+"""
+
+import os
+import time
+from pathlib import Path
+
 import pytest
+import requests
 from dotenv import load_dotenv
+from testcontainers.compose import DockerCompose
+
+
+def _is_service_ready(url: str, expected_status: int = 200) -> bool:
+    """Check if HTTP service is ready by making a request."""
+    try:
+        response = requests.get(url, timeout=5)
+        return response.status_code == expected_status
+    except Exception:
+        return False
+
+
+def _wait_for_service(url: str, timeout: int = 120, interval: int = 5) -> None:
+    """Wait for HTTP service to be ready with timeout."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if _is_service_ready(url):
+            return
+        time.sleep(interval)
+    raise TimeoutError(
+        f"Service at {url} did not become ready within {timeout} seconds"
+    )
 
 
 @pytest.fixture(scope="session")
-def page_url() -> str:
+def app_container() -> DockerCompose:
     """
-    Returns the URL of the page to be tested.
+    Provides a fully running application stack via Docker Compose.
     """
-    # This default must match the default in docker-compose.yml
-    host_port = os.getenv("HOST_PORT", "50080")
-    return f"http://localhost:{host_port}/"
-
-
-@pytest.fixture(scope="session", autouse=True)
-def e2e_setup(page_url: str) -> Generator[None, None, None]:
-    """
-    Manages the lifecycle of the application for end-to-end testing.
-    """
-    # Load environment variables from .env.test
-    load_dotenv(".env.test")
-
-    # Set PROJECT_NAME environment variable
-    project_name = "django-site-template"
-    os.environ["PROJECT_NAME"] = project_name
-
-    # Determine if sudo should be used based on environment variable
-    # This allows `SUDO=true make e2e-test` to work as expected.
-    use_sudo = os.getenv("SUDO") == "true"
-    docker_command = ["sudo", "docker"] if use_sudo else ["docker"]
-
-    # Start services using docker-compose
-    print("\n🚀 Starting E2E services...")
-    compose_up_command = docker_command + [
-        "compose",
-        "-f",
+    load_dotenv(".env")
+    compose_files = [
         "docker-compose.yml",
-        "--env-file",
-        ".env.test",
-        "--project-name",
-        "template-test",
-        "up",
-        "-d",
-        "--build",
-    ]
-    subprocess.run(compose_up_command, check=True)
-
-    # Teardown command to be used both on success and failure
-    compose_down_command = docker_command + [
-        "compose",
-        "--project-name",
-        "template-test",
-        "down",
-        "--remove-orphans",
+        "docker-compose.test.override.yml",
     ]
 
-    # Health Check
-    start_time = time.time()
-    timeout = 120
-    is_healthy = False
-    print(f"Polling health check at {page_url}...")
-    while time.time() - start_time < timeout:
-        try:
-            response = httpx.get(page_url, timeout=5)
-            if response.status_code == 200:
-                print("✅ Application is healthy!")
-                is_healthy = True
-                break
-            else:
-                print(f"⏳ Health check returned {response.status_code}, retrying...")
-                time.sleep(5)
-        except httpx.RequestError as exc:
-            print(f"⏳ Application not yet healthy ({exc!r}), retrying...")
-            time.sleep(5)
+    # Find the project root by looking for a known file, e.g., pyproject.toml
+    project_root = Path(__file__).parent.parent.parent
+    [str(project_root / file) for file in compose_files]
 
-    if not is_healthy:
-        log_command = docker_command + [
-            "compose",
-            "--project-name",
-            "template-test",
-            "logs",
-            "web",
-        ]
-        subprocess.run(log_command)
-        # Ensure teardown on failure to avoid lingering containers
-        print("\n🛑 Stopping E2E services due to health check failure...")
-        subprocess.run(compose_down_command, check=True)
-        pytest.fail(f"Application did not become healthy within {timeout} seconds.")
+    with DockerCompose(
+        context=str(project_root),
+        compose_file_name=compose_files,
+        build=True,
+    ) as compose:
+        # Get the test port from environment variable
+        host_port = os.getenv("TEST_PORT", "8002")
+        # Verify that nginx service is running
+        nginx_container = compose.get_container("nginx")
+        assert nginx_container is not None, "nginx container could not be found."
 
-    yield
+        # Construct the health check URL
+        health_check_url = f"http://localhost:{host_port}/"
 
-    # Stop services
-    print("\n🛑 Stopping E2E services...")
-    subprocess.run(compose_down_command, check=True)
+        # Wait for the service to be healthy
+        _wait_for_service(health_check_url, timeout=120, interval=5)
+
+        # Add the host port to the container object for access in other fixtures
+        compose.host_port = host_port
+        yield compose
+
+
+@pytest.fixture(scope="session")
+def page_url(app_container: DockerCompose) -> str:
+    """
+    Returns the base URL of the running application.
+    """
+    host_port = app_container.host_port
+    return f"http://localhost:{host_port}/"

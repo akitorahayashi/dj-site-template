@@ -19,14 +19,16 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install and configure Poetry
-        run: |
-          pipx install poetry
-          poetry config virtualenvs.in-project true
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install uv
+        run: pipx install uv
 
       - name: Install dependencies
-        run: make setup
+        run: uv sync --frozen
+
+      - name: Create .env file for CI
+        run: cp .env.example .env
 
       - name: Run tests
-        run: make ${{ matrix.test_target }}
+        env:
+          SUDO: ${{ secrets.SUDO || 'true' }}
+        run: uv run make ${{ matrix.test_target }}
