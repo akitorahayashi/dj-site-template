@@ -141,6 +141,25 @@ test: unit-test build-test e2e-test ## Run the full test suite
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
 	@uv run pytest tests/unit -v -s
+
+.PHONY: db-test-sqlite
+db-test-sqlite: ## Run database tests with SQLite (fast, lightweight)
+	@echo "🚀 Running database tests with SQLite..."
+	@USE_SQLITE=true uv run pytest tests/db -v -s
+
+.PHONY: db-test-postgres
+db-test-postgres: ## Run database tests with PostgreSQL (robust, production-like)
+	@echo "🚀 Starting TEST containers for database test..."
+	@USE_SQLITE=false $(TEST_COMPOSE) up -d --build
+	@echo "Running database tests..."
+	@USE_SQLITE=false $(TEST_COMPOSE) exec web pytest tests/db -v -s;
+	@EXIT_CODE=$$?;
+	@echo "🔴 Stopping TEST containers..."
+	@USE_SQLITE=false $(TEST_COMPOSE) down;
+	@exit $$EXIT_CODE
+
+.PHONY: db-test
+db-test: db-test-sqlite ## Run database tests (defaults to SQLite for speed)
 	
 .PHONY: build-test
 build-test: ## Build Docker image to verify build process
@@ -153,7 +172,7 @@ build-test: ## Build Docker image to verify build process
 .PHONY: e2e-test
 e2e-test: ## Run end-to-end tests against a live application stack
 	@echo "Running end-to-end tests..."
-	@uv run python -m pytest tests/e2e -v -s
+	@uv run pytest tests/e2e -v -s
 
 # ==============================================================================
 # CLEANUP

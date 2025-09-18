@@ -3,7 +3,7 @@ services:
     build:
       context: ./nginx
     ports:
-      - "${WEB_HOST}:${HOST_PORT}:80"
+      - "${HOST_BIND_IP}:${HOST_PORT}:80"
     volumes:
       - static-volume:/app/static
     depends_on:
@@ -23,7 +23,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_HOST_DB_NAME}
+      - DEBUG=false
+      - USE_SQLITE=false
+      - POSTGRES_DB=${POSTGRES_HOST_DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "python -c \"import os,sys,urllib.request; url=f'http://localhost:8000{os.getenv('HEALTHCHECK_PATH','/health/')}'; r=urllib.request.urlopen(url, timeout=5); sys.exit(0 if getattr(r,'status',200)==200 else 1)\"" ]
       interval: 30s

@@ -1,7 +1,7 @@
 services:
   nginx:
     ports: !override
-      - "${WEB_HOST}:${DEV_PORT}:80"
+      - "${HOST_BIND_IP}:${DEV_PORT}:80"
 
   web:
     build:
