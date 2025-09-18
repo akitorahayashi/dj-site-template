@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import socket
 from pathlib import Path
 
 import pytest

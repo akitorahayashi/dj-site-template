@@ -58,10 +58,17 @@ The project is equipped with tools to maintain code quality, including tests, a 
 
 ### Running Tests
 
+**Local development (fast, lightweight):**
 ```bash
 make test
 ```
-This runs the all tests.
+Runs unit tests, SQLite database tests, and integration tests using Django runserver.
+
+**Production-like testing (comprehensive):**
+```bash
+make docker-test
+```
+Runs Docker build verification, PostgreSQL database tests, and end-to-end tests in containers.
 
 ### Code Formatting and Linting
 

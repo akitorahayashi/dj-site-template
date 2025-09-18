@@ -131,24 +131,44 @@ lint: ## Lint code with black check and ruff
 	@uv run ruff check .
 
 # ==============================================================================
-# TESTING
+# LOCAL TESTING (lightweight, fast development)
 # ==============================================================================
 
 .PHONY: test
-test: unit-test build-test e2e-test ## Run the full test suite
+test: unit-test sqlt-test intg-test ## Run lightweight local test suite (recommended for development)
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
 	@uv run pytest tests/unit -v -s
 
-.PHONY: db-test-sqlite
-db-test-sqlite: ## Run database tests with SQLite (fast, lightweight)
+.PHONY: sqlt-test
+sqlt-test: ## Run database tests with SQLite (fast, lightweight)
 	@echo "🚀 Running database tests with SQLite..."
 	@USE_SQLITE=true uv run pytest tests/db -v -s
 
-.PHONY: db-test-postgres
-db-test-postgres: ## Run database tests with PostgreSQL (robust, production-like)
+.PHONY: intg-test
+intg-test: ## Run integration tests using Django runserver (lightweight, no containers)
+	@echo "🚀 Running integration tests with Django runserver..."
+	@uv run pytest tests/intg -v -s
+
+# ==============================================================================
+# DOCKER TESTING (production-like, comprehensive)
+# ==============================================================================
+
+.PHONY: docker-test
+docker-test: build-test pstg-test e2e-test ## Run all Docker-based tests
+
+.PHONY: build-test
+build-test: ## Build Docker image to verify build process
+	@echo "Building Docker image to verify build process..."
+	@$(DOCKER_CMD) build --no-cache --target production -t test-build:temp . || (echo "Docker build failed"; exit 1)
+	@echo "✅ Docker build successful"
+	@echo "Cleaning up test image..."
+	@$(DOCKER_CMD) rmi test-build:temp || true
+
+.PHONY: pstg-test
+pstg-test: ## Run database tests with PostgreSQL (robust, production-like)
 	@echo "🚀 Starting TEST containers for database test..."
 	@USE_SQLITE=false $(TEST_COMPOSE) up -d --build
 	@echo "Running database tests..."
@@ -158,21 +178,16 @@ db-test-postgres: ## Run database tests with PostgreSQL (robust, production-like
 	@USE_SQLITE=false $(TEST_COMPOSE) down;
 	@exit $$EXIT_CODE
 
-.PHONY: db-test
-db-test: db-test-sqlite ## Run database tests (defaults to SQLite for speed)
-	
-.PHONY: build-test
-build-test: ## Build Docker image to verify build process
-	@echo "Building Docker image to verify build process..."
-	@$(DOCKER_CMD) build --no-cache --target production -t test-build:temp . || (echo "Docker build failed"; exit 1)
-	@echo "✅ Docker build successful"
-	@echo "Cleaning up test image..."
-	@$(DOCKER_CMD) rmi test-build:temp || true
-
 .PHONY: e2e-test
-e2e-test: ## Run end-to-end tests against a live application stack
-	@echo "Running end-to-end tests..."
-	@uv run pytest tests/e2e -v -s
+e2e-test: ## Run e2e tests against containerized application stack
+	@echo "🚀 Starting containers for e2e tests..."
+	@$(DEV_COMPOSE) up -d --build
+	@echo "Running e2e tests against containers..."
+	@uv run pytest tests/e2e -v -s; \
+	EXIT_CODE=$$?; \
+	echo "🔴 Stopping containers..."; \
+	$(DEV_COMPOSE) down; \
+	exit $$EXIT_CODE
 
 # ==============================================================================
 # CLEANUP
