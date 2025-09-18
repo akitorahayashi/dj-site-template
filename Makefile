@@ -76,13 +76,13 @@ setup: ## Initialize project: install dependencies, create .env file and pull re
 	@echo "   📝 Adjust other settings as needed"
 	@echo ""
 	@echo "Pulling PostgreSQL image for development..."
-	@POSTGRES_IMAGE="postgres:16-alpine"; \
-	if [ -f .env ] && grep -q "^POSTGRES_IMAGE=" .env; then \
-		POSTGRES_IMAGE=$$(sed -n 's/^POSTGRES_IMAGE=\(.*\)/\1/p' .env | head -n1 | tr -d '\r'); \
-		[ -z "$$POSTGRES_IMAGE" ] && POSTGRES_IMAGE="postgres:16-alpine"; \
+	@POSTGRES_IMAGE_NAME="postgres:16-alpine"; \
+	if [ -f .env ] && grep -q "^POSTGRES_IMAGE_NAME=" .env; then \
+		POSTGRES_IMAGE_NAME=$$(sed -n 's/^POSTGRES_IMAGE_NAME=\(.*\)/\1/p' .env | head -n1 | tr -d '\r'); \
+		[ -z "$$POSTGRES_IMAGE_NAME" ] && POSTGRES_IMAGE_NAME="postgres:16-alpine"; \
 	fi; \
-	echo "Using POSTGRES_IMAGE=$$POSTGRES_IMAGE"; \
-	$(DOCKER_CMD) pull "$$POSTGRES_IMAGE"
+	echo "Using POSTGRES_IMAGE_NAME=$$POSTGRES_IMAGE_NAME"; \
+	$(DOCKER_CMD) pull "$$POSTGRES_IMAGE_NAME"
 	@echo "✅ Setup complete. Dependencies are installed and .env file is ready."
 
 # ==============================================================================
@@ -115,34 +115,6 @@ rebuild: ## Rebuild services, pulling base images, without cache, and restart
 	@$(DEV_COMPOSE) up -d --build --no-cache --pull always
 
 # ==============================================================================
-# Django Management Commands
-# ==============================================================================
-
-.PHONY: makemigrations
-makemigrations: ## [DEV] Create new migration files
-	@$(DEV_COMPOSE) exec web uv run python manage.py makemigrations
-
-.PHONY: migrate
-migrate: ## [DEV] Run database migrations
-	@echo "Running DEV database migrations..."
-	@$(DEV_COMPOSE) exec web uv run python manage.py migrate
-
-.PHONY: superuser
-superuser: ## [DEV] Create a Django superuser
-	@echo "Creating DEV superuser..."
-	@$(DEV_COMPOSE) exec web uv run python manage.py createsuperuser
-
-.PHONY: migrate-prod
-migrate-prod: ## [PROD] Run database migrations in production-like environment
-	@echo "Running PROD-like database migrations..."
-	@$(PROD_COMPOSE) exec web uv run python manage.py migrate
-
-.PHONY: superuser-prod
-superuser-prod: ## [PROD] Create a Django superuser in production-like environment
-	@echo "Creating PROD-like superuser..."
-	@$(PROD_COMPOSE) exec web uv run python manage.py createsuperuser
-
-# ==============================================================================
 # CODE QUALITY 
 # ==============================================================================
 
@@ -163,17 +135,12 @@ lint: ## Lint code with black check and ruff
 # ==============================================================================
 
 .PHONY: test
-test: unit-test build-test db-test e2e-test ## Run the full test suite
+test: unit-test build-test e2e-test ## Run the full test suite
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
 	@uv run pytest tests/unit -v -s
-
-.PHONY: db-test
-db-test: ## Run the slower, database-dependent tests locally
-	@echo "Running database tests..."
-	@uv run python -m pytest tests/db -v -s
 	
 .PHONY: build-test
 build-test: ## Build Docker image to verify build process

@@ -1,11 +1,7 @@
-# Development override - includes live code reloading
-# Environment variables are loaded from .env file
 services:
-  db:
-    environment:
-      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DEV_DB_NAME}" ]
+  nginx:
+    ports: !override
+      - "${WEB_HOST}:${DEV_PORT}:80"
 
   web:
     build:
@@ -20,9 +16,11 @@ services:
       - .:/app
       - /app/.venv
 
-  nginx:
-    ports: !override
-      - "${WEB_HOST}:${DEV_PORT}:80"
+  db:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DEV_DB_NAME}" ]
 
 volumes:
   postgres-db:

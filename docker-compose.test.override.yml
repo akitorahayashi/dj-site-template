@@ -1,24 +1,22 @@
-# Test override - isolated test environment
-# Environment variables are set directly here for test isolation
 services:
-  db:
-    environment:
-      - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB_NAME}" ]
+  nginx:
+    ports: !override
+      - "${WEB_HOST}:${TEST_PORT}:80"
 
   web:
     build:
       target: development
     environment:
       - DEBUG=True
-      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB_NAME}
       - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
 
-  nginx:
-    ports: !override
-      - "${WEB_HOST}:${TEST_PORT}:80"
+  db:
+    environment:
+      - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB_NAME}" ]
+
 
 volumes:
   postgres-db:
