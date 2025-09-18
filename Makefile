@@ -131,11 +131,15 @@ lint: ## Lint code with black check and ruff
 	@uv run ruff check .
 
 # ==============================================================================
-# LOCAL TESTING (lightweight, fast development)
+# TESTING
 # ==============================================================================
 
 .PHONY: test
-test: unit-test sqlt-test intg-test ## Run lightweight local test suite (recommended for development)
+test: local-test docker-test ## Run complete test suite (local then docker)
+
+# --- Local testing (lightweight, fast development) ---
+.PHONY: local-test
+local-test: unit-test sqlt-test intg-test ## Run lightweight local test suite (recommended for development)
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
@@ -152,10 +156,7 @@ intg-test: ## Run integration tests using Django runserver (lightweight, no cont
 	@echo "🚀 Running integration tests with Django runserver..."
 	@uv run pytest tests/intg -v -s
 
-# ==============================================================================
-# DOCKER TESTING (production-like, comprehensive)
-# ==============================================================================
-
+# --- Docker testing (production-like, comprehensive) ---
 .PHONY: docker-test
 docker-test: build-test pstg-test e2e-test ## Run all Docker-based tests
 

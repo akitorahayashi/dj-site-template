@@ -9,7 +9,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_target: [test, docker-test]
+        include:
+          - test_type: "local"
+            targets: ["unit-test", "sqlt-test", "intg-test"]
+          - test_type: "docker"
+            targets: ["build-test", "pstg-test", "e2e-test"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +32,11 @@ jobs:
       - name: Create .env file for CI
         run: cp .env.example .env
 
-      - name: Run tests
+      - name: Run ${{ matrix.test_type }} tests
         env:
           SUDO: ${{ secrets.SUDO || 'true' }}
-        run: make ${{ matrix.test_target }}
+        run: |
+          for target in ${{ join(matrix.targets, ' ') }}; do
+            echo "Running: make $target"
+            make $target
+          done
