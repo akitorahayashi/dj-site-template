@@ -32,7 +32,7 @@ class TestDatabaseConnection(TransactionTestCase):
 
             # Insert test data
             cursor.execute(
-                "INSERT INTO test_table (name) VALUES (?)",
+                "INSERT INTO test_table (name) VALUES (%s)",
                 ("test_entry",),
             )
 
