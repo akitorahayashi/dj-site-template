@@ -6,6 +6,8 @@ services:
   web:
     build:
       target: development
+    env_file:
+      - .env
     environment:
       - DEBUG=true
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB_NAME}

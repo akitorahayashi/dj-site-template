@@ -181,14 +181,8 @@ pstg-test: ## Run database tests with PostgreSQL (robust, production-like)
 
 .PHONY: e2e-test
 e2e-test: ## Run e2e tests against containerized application stack
-	@echo "🚀 Starting containers for e2e tests..."
-	@$(DEV_COMPOSE) up -d --build
-	@echo "Running e2e tests against containers..."
-	@uv run pytest tests/e2e -v -s; \
-	EXIT_CODE=$$?; \
-	echo "🔴 Stopping containers..."; \
-	$(DEV_COMPOSE) down; \
-	exit $$EXIT_CODE
+	@echo "🚀 Running e2e tests..."
+	@uv run pytest tests/e2e -v -s
 
 # ==============================================================================
 # CLEANUP

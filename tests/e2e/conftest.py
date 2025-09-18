@@ -3,15 +3,16 @@ import subprocess
 import time
 from pathlib import Path
 
+import httpx
 import pytest
-import requests
 from dotenv import load_dotenv
 
 
 def _is_service_ready(url: str, expected_status: int = 200) -> bool:
     """Check if HTTP service is ready by making a request."""
     try:
-        response = requests.get(url, timeout=5)
+        with httpx.Client(timeout=5) as client:
+            response = client.get(url)
         return response.status_code == expected_status
     except Exception:
         return False
