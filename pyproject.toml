@@ -3,7 +3,6 @@ name = "dj-site-tmpl"
 version = "0.1.0"
 description = "A comprehensive Django project template."
 authors = [{ name = "akitorahayashi", email = "atora.has75@gmail.com" }]
-readme = "README.md"
 requires-python = ">=3.12,<4.0"
 dependencies = [
     "django>=5.2.5,<6.0.0",
@@ -26,12 +25,12 @@ dev = [
     "testcontainers[postgres]>=4.12.0",
 ]
 
+[tool.uv]
+package = false
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv]
-package = false
 
 [tool.black]
 target-version = ['py312']

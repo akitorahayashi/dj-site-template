@@ -28,7 +28,7 @@ DOCKER_CMD := $(SUDO_PREFIX) docker
 -include .env
 
 # Define the project name - try to read from .env file, fallback to directory name
-PROJECT_NAME ?= dj-site-tmpl
+PROJECT_NAME ?= dj-site-template
 
 # Define project names for different environments
 DEV_PROJECT_NAME := $(PROJECT_NAME)-dev
@@ -114,51 +114,33 @@ rebuild: ## Rebuild services, pulling base images, without cache, and restart
 	@echo "Rebuilding all DEV services with --no-cache and --pull..."
 	@$(DEV_COMPOSE) up -d --build --no-cache --pull always
 
-.PHONY: clean
-clean: ## Remove all generated files and stop all containers
-	@echo "Cleaning up project..."
-	@$(DEV_COMPOSE) down -v --remove-orphans
-	@$(PROD_COMPOSE) down -v --remove-orphans
-	@echo "Cleanup complete."
-
-.PHONY: logs
-logs: ## Show and follow dev container logs
-	@echo "Showing DEV logs..."
-	@$(DEV_COMPOSE) logs -f
-
-.PHONY: shell
-shell: ## Start a shell inside the dev 'web' container
-	@echo "Opening shell in dev web container..."
-	@$(DEV_COMPOSE) exec web /bin/bash || \
-		(echo "Failed to open shell. Is the container running? Try 'make up'" && exit 1)
-
 # ==============================================================================
 # Django Management Commands
 # ==============================================================================
 
 .PHONY: makemigrations
 makemigrations: ## [DEV] Create new migration files
-	@$(DEV_COMPOSE) exec web python manage.py makemigrations
+	@$(DEV_COMPOSE) exec web uv run python manage.py makemigrations
 
 .PHONY: migrate
 migrate: ## [DEV] Run database migrations
 	@echo "Running DEV database migrations..."
-	@$(DEV_COMPOSE) exec web python manage.py migrate
+	@$(DEV_COMPOSE) exec web uv run python manage.py migrate
 
 .PHONY: superuser
 superuser: ## [DEV] Create a Django superuser
 	@echo "Creating DEV superuser..."
-	@$(DEV_COMPOSE) exec web python manage.py createsuperuser
+	@$(DEV_COMPOSE) exec web uv run python manage.py createsuperuser
 
 .PHONY: migrate-prod
 migrate-prod: ## [PROD] Run database migrations in production-like environment
 	@echo "Running PROD-like database migrations..."
-	@$(PROD_COMPOSE) exec web python manage.py migrate
+	@$(PROD_COMPOSE) exec web uv run python manage.py migrate
 
 .PHONY: superuser-prod
 superuser-prod: ## [PROD] Create a Django superuser in production-like environment
 	@echo "Creating PROD-like superuser..."
-	@$(PROD_COMPOSE) exec web python manage.py createsuperuser
+	@$(PROD_COMPOSE) exec web uv run python manage.py createsuperuser
 
 # ==============================================================================
 # CODE QUALITY 
@@ -167,14 +149,14 @@ superuser-prod: ## [PROD] Create a Django superuser in production-like environme
 .PHONY: format
 format: ## Format code with black and ruff --fix
 	@echo "Formatting code with black and ruff..."
-	black .
-	ruff check . --fix
+	@uv run black .
+	@uv run ruff check . --fix
 
 .PHONY: lint
 lint: ## Lint code with black check and ruff
 	@echo "Linting code with black check and ruff..."
-	black --check .
-	ruff check .
+	@uv run black --check .
+	@uv run ruff check .
 
 # ==============================================================================
 # TESTING
@@ -186,36 +168,37 @@ test: unit-test build-test db-test e2e-test ## Run the full test suite
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
-	@pytest tests/unit -v -s
+	@uv run pytest tests/unit -v -s
 
 .PHONY: db-test
 db-test: ## Run the slower, database-dependent tests locally
 	@echo "Running database tests..."
-	@python -m pytest tests/db -v -s
+	@uv run python -m pytest tests/db -v -s
 	
 .PHONY: build-test
-build-test: ## Build Docker image and run smoke tests in clean environment
-	@echo "Building Docker image and running smoke tests..."
-	@$(DOCKER_CMD) build --target dev-deps -t test-build:temp . || (echo "Docker build failed"; exit 1)
-	@echo "Running smoke tests in Docker container..."
-	@$(DOCKER_CMD) run --rm \
-		--env-file .env \
-		-v $(CURDIR)/tests:/app/tests \
-		-v $(CURDIR)/apps:/app/apps \
-		-v $(CURDIR)/config:/app/config \
-		-v $(CURDIR)/manage.py:/app/manage.py \
-		-v $(CURDIR)/pyproject.toml:/app/pyproject.toml \
-		-e PATH="/app/.venv/bin:$$PATH" \
-		test-build:temp \
-		sh -c "/app/.venv/bin/python -m pytest tests/unit/" || (echo "Smoke tests failed"; exit 1)
+build-test: ## Build Docker image to verify build process
+	@echo "Building Docker image to verify build process..."
+	@$(DOCKER_CMD) build --no-cache --target dev-deps -t test-build:temp . || (echo "Docker build failed"; exit 1)
+	@echo "✅ Docker build successful"
 	@echo "Cleaning up test image..."
 	@$(DOCKER_CMD) rmi test-build:temp || true
 
 .PHONY: e2e-test
 e2e-test: ## Run end-to-end tests against a live application stack
 	@echo "Running end-to-end tests..."
-	@python -m pytest tests/e2e -v -s
+	@uv run python -m pytest tests/e2e -v -s
 
+# ==============================================================================
+# CLEANUP
+# ==============================================================================
 
+.PHONY: clean
+clean: ## Remove __pycache__ and .venv to make project lightweight
+	@echo "🧹 Cleaning up project..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@rm -rf .venv
+	@rm -rf .pytest_cache
+	@rm -rf .ruff_cache
+	@echo "✅ Cleanup completed"
 
 
