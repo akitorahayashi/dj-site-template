@@ -26,5 +26,3 @@ def postgres_container():
     ) as postgres:
         os.environ["DATABASE_URL"] = postgres.get_connection_url()
         yield postgres
-
-
