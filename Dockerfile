@@ -68,6 +68,7 @@ ENV PATH="/app/.venv/bin:${PATH}"
 COPY --chown=appuser:appgroup manage.py .
 COPY --chown=appuser:appgroup apps/ ./apps/
 COPY --chown=appuser:appgroup config/ ./config/
+COPY --chown=appuser:appgroup tests/ ./tests/
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 

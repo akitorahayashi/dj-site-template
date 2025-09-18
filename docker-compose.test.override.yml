@@ -1,13 +1,15 @@
 services:
   nginx:
     ports: !override
-      - "${WEB_HOST}:${TEST_PORT}:80"
+      - "${HOST_BIND_IP}:${TEST_PORT}:80"
 
   web:
     build:
       target: development
+    env_file:
+      - .env
     environment:
-      - DEBUG=True
+      - DEBUG=true
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_TEST_DB_NAME}
       - POSTGRES_DB=${POSTGRES_TEST_DB_NAME}
 

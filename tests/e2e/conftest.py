@@ -3,15 +3,16 @@ import subprocess
 import time
 from pathlib import Path
 
+import httpx
 import pytest
-import requests
 from dotenv import load_dotenv
 
 
 def _is_service_ready(url: str, expected_status: int = 200) -> bool:
     """Check if HTTP service is ready by making a request."""
     try:
-        response = requests.get(url, timeout=5)
+        with httpx.Client(timeout=5) as client:
+            response = client.get(url)
         return response.status_code == expected_status
     except Exception:
         return False
@@ -40,7 +41,7 @@ def app_container():
     project_root = Path(__file__).parent.parent.parent
 
     # Get the test port from environment variable
-    host_port = os.getenv("TEST_PORT", "8002")
+    test_port = os.getenv("TEST_PORT", "8002")
 
     # Start Docker Compose services
     compose_cmd = [
@@ -60,17 +61,17 @@ def app_container():
         subprocess.run(compose_cmd, cwd=project_root, check=True)
 
         # Construct the health check URL
-        health_check_url = f"http://localhost:{host_port}/"
+        health_check_url = f"http://localhost:{test_port}/"
 
         # Wait for the service to be healthy
         _wait_for_service(health_check_url, timeout=120, interval=5)
 
-        # Create a simple object to hold the host port
+        # Create a simple object to hold the test port
         class ComposeInfo:
-            def __init__(self, host_port):
-                self.host_port = host_port
+            def __init__(self, test_port):
+                self.test_port = test_port
 
-        yield ComposeInfo(host_port)
+        yield ComposeInfo(test_port)
 
     finally:
         # Stop and remove Docker Compose services
@@ -91,5 +92,5 @@ def page_url(app_container) -> str:
     """
     Returns the base URL of the running application.
     """
-    host_port = app_container.host_port
-    return f"http://localhost:{host_port}/"
+    test_port = app_container.test_port
+    return f"http://localhost:{test_port}/"
