@@ -44,7 +44,8 @@ def app_container():
 
     # Start Docker Compose services
     compose_cmd = [
-        "docker-compose",
+        "docker",
+        "compose",
         "-f",
         "docker-compose.yml",
         "-f",
@@ -74,7 +75,8 @@ def app_container():
     finally:
         # Stop and remove Docker Compose services
         stop_cmd = [
-            "docker-compose",
+            "docker",
+            "compose",
             "-f",
             "docker-compose.yml",
             "-f",
