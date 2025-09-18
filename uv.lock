@@ -111,8 +111,8 @@ wheels = [
 ]
 
 [[package]]
-name = "dj-site-tmpl"
-version = "0.1.0"
+name = "dj-site-template"
+version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "dj-database-url" },
