@@ -1,7 +1,9 @@
+import pytest
 from django.db import connection
 from django.test import TransactionTestCase
 
 
+@pytest.mark.usefixtures("postgres_container")
 class TestDatabaseConnection(TransactionTestCase):
     def test_database_connection_exists(self):
         """Test that we can connect to the database."""

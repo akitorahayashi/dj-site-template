@@ -1,6 +1,5 @@
 import os
 
-import psycopg2
 import pytest
 from dotenv import load_dotenv
 from testcontainers.postgres import PostgresContainer
@@ -29,19 +28,3 @@ def postgres_container():
         yield postgres
 
 
-@pytest.fixture
-def db_connection(postgres_container):
-    """
-    Provides a database connection for individual tests.
-    """
-    conn = psycopg2.connect(
-        host=postgres_container.get_container_host_ip(),
-        port=postgres_container.get_exposed_port(5432),
-        user=postgres_container.username,
-        password=postgres_container.password,
-        database=postgres_container.dbname,
-    )
-
-    yield conn
-
-    conn.close()
