@@ -11,6 +11,9 @@ jobs:
       matrix:
         test_target: [build-test, pstg-test, e2e-test]
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-test-env
 
       - name: Run ${{ matrix.test_target }}
