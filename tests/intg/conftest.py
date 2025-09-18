@@ -1,17 +1,16 @@
-import os
+import socket
 import subprocess
 import time
-import socket
 from pathlib import Path
 
-import pytest
 import httpx
+import pytest
 
 
 def _find_free_port() -> int:
     """Find a free port to use for the test server."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
+        s.bind(("", 0))
         s.listen(1)
         port = s.getsockname()[1]
     return port
@@ -52,7 +51,13 @@ def test_server():
 
     # Start Django runserver
     runserver_cmd = [
-        "uv", "run", "python", "manage.py", "runserver", f"127.0.0.1:{port}", "--noreload"
+        "uv",
+        "run",
+        "python",
+        "manage.py",
+        "runserver",
+        f"127.0.0.1:{port}",
+        "--noreload",
     ]
 
     try:
@@ -61,7 +66,7 @@ def test_server():
             runserver_cmd,
             cwd=project_root,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
 
         # Construct the health check URL
@@ -80,7 +85,7 @@ def test_server():
 
     finally:
         # Stop the runserver process
-        if 'process' in locals():
+        if "process" in locals():
             process.terminate()
             try:
                 process.wait(timeout=5)
