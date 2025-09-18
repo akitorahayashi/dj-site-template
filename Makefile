@@ -51,9 +51,9 @@ TEST_COMPOSE := $(DOCKER_CMD) compose -f docker-compose.yml -f docker-compose.te
 help: ## Show this help message
 	@echo "Usage: make [target] [VAR=value]"
 	@echo "Options:"
-	@echo "  \033[36m%-15s\033[0m %s" "SUDO=true" "Run docker commands with sudo (e.g., make up SUDO=true)"
+	@printf "  \033[36m%-15s\033[0m %s\n" "SUDO=true" "Run docker commands with sudo (e.g., make up SUDO=true)"
 	@echo "Available targets:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # ==============================================================================
 # Environment Setup
@@ -145,7 +145,7 @@ unit-test: ## Run unit tests
 .PHONY: build-test
 build-test: ## Build Docker image to verify build process
 	@echo "Building Docker image to verify build process..."
-	@$(DOCKER_CMD) build --no-cache --target dev-deps -t test-build:temp . || (echo "Docker build failed"; exit 1)
+	@$(DOCKER_CMD) build --no-cache --target production -t test-build:temp . || (echo "Docker build failed"; exit 1)
 	@echo "✅ Docker build successful"
 	@echo "Cleaning up test image..."
 	@$(DOCKER_CMD) rmi test-build:temp || true
