@@ -3,6 +3,7 @@ import os
 import psycopg2
 import pytest
 from dotenv import load_dotenv
+from testcontainers.postgres import PostgresContainer
 
 # Load environment variables
 load_dotenv(".env", override=True)
@@ -10,6 +11,7 @@ load_dotenv(".env", override=True)
 # Set DATABASE_URL for tests if not set
 if "DATABASE_URL" not in os.environ:
     os.environ["DATABASE_URL"] = "sqlite:///test_db.sqlite3"
+
 
 @pytest.fixture(scope="session")
 def postgres_container():
