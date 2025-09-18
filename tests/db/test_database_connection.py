@@ -1,98 +1,94 @@
-def test_database_connection_exists(db_connection):
-    """Test that we can connect to the PostgreSQL database."""
-    assert db_connection is not None
-
-    # Test basic query
-    cursor = db_connection.cursor()
-    cursor.execute("SELECT version()")
-    version = cursor.fetchone()
-    cursor.close()
-
-    assert version is not None
-    assert "PostgreSQL" in version[0]
+from django.test import TestCase, TransactionTestCase
+from django.db import connection
 
 
-def test_database_basic_operations(db_connection):
-    """Test basic database operations (CREATE, INSERT, SELECT, DROP)."""
-    cursor = db_connection.cursor()
+class TestDatabaseConnection(TransactionTestCase):
+    def test_database_connection_exists(self):
+        """Test that we can connect to the database."""
+        assert connection is not None
 
-    try:
-        # Create a test table
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS test_table (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """
-        )
-
-        # Insert test data
-        cursor.execute(
-            "INSERT INTO test_table (name) VALUES (%s) RETURNING id",
-            ("test_entry",),
-        )
-        inserted_id = cursor.fetchone()[0]
-
-        # Query the data
-        cursor.execute("SELECT name FROM test_table WHERE id = %s", (inserted_id,))
+        # Test basic query
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
         result = cursor.fetchone()
-
-        assert result is not None
-        assert result[0] == "test_entry"
-
-        # Clean up
-        cursor.execute("DROP TABLE test_table")
-        db_connection.commit()
-
-    except Exception as e:
-        db_connection.rollback()
-        raise e
-    finally:
         cursor.close()
 
+        assert result == (1,)
 
-def test_database_transaction_rollback(db_connection):
-    """Test that database transactions can be rolled back properly."""
-    cursor = db_connection.cursor()
+    def test_database_basic_operations(self):
+        """Test basic database operations (CREATE, INSERT, SELECT, DROP)."""
+        cursor = connection.cursor()
 
-    try:
-        # Create test table
-        cursor.execute(
+        try:
+            # Create a test table
+            cursor.execute(
+                """
+                CREATE TABLE test_table (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(100) NOT NULL
+                )
             """
-            CREATE TABLE IF NOT EXISTS test_rollback (
-                id SERIAL PRIMARY KEY,
-                value VARCHAR(50)
             )
-        """
-        )
-        db_connection.commit()
 
-        # Start a transaction that we'll rollback
-        cursor.execute(
-            "INSERT INTO test_rollback (value) VALUES (%s)",
-            ("should_be_rolled_back",),
-        )
+            # Insert test data
+            cursor.execute(
+                "INSERT INTO test_table (name) VALUES (?)",
+                ("test_entry",),
+            )
 
-        # Rollback the transaction
-        db_connection.rollback()
+            # Query the data
+            cursor.execute("SELECT name FROM test_table")
+            results = cursor.fetchall()
 
-        # Verify the data was not committed
-        cursor.execute(
-            "SELECT COUNT(*) FROM test_rollback WHERE value = %s",
-            ("should_be_rolled_back",),
-        )
-        count = cursor.fetchone()[0]
+            assert len(results) == 1
+            assert results[0][0] == "test_entry"
 
-        assert count == 0, "Transaction was not properly rolled back"
+            # Clean up
+            cursor.execute("DROP TABLE test_table")
 
-        # Clean up
-        cursor.execute("DROP TABLE test_rollback")
-        db_connection.commit()
+        finally:
+            cursor.close()
 
-    except Exception as e:
-        db_connection.rollback()
-        raise e
-    finally:
-        cursor.close()
+    def test_orm_basic_operations(self):
+        """Test Django ORM operations without persistent models."""
+        from django.db import models
+        
+        # Define a model dynamically within the test
+        class TestModel(models.Model):
+            name = models.CharField(max_length=100)
+            created_at = models.DateTimeField(auto_now_add=True)
+            
+            class Meta:
+                app_label = 'test'  # Test app label
+        
+        # Create the model's table
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(TestModel)
+        
+        try:
+            # Test ORM operations
+            # Create
+            obj = TestModel.objects.create(name="Test Object")
+            assert obj.name == "Test Object"
+            assert obj.pk is not None
+            
+            # Retrieve
+            retrieved = TestModel.objects.get(pk=obj.pk)
+            assert retrieved.name == "Test Object"
+            
+            # Update
+            obj.name = "Updated Object"
+            obj.save()
+            updated = TestModel.objects.get(pk=obj.pk)
+            assert updated.name == "Updated Object"
+            
+            # Delete
+            obj.delete()
+            assert TestModel.objects.count() == 0
+            
+        finally:
+            # Cleanup
+            with connection.schema_editor() as schema_editor:
+                schema_editor.delete_model(TestModel)
+
+

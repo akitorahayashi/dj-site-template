@@ -20,7 +20,6 @@ def postgres_container():
     with PostgresContainer(
         "postgres:15-alpine", username=db_user, password=db_password, dbname=db_name
     ) as postgres:
-        # Set DATABASE_URL for Django settings
         os.environ["DATABASE_URL"] = postgres.get_connection_url()
         yield postgres
 
