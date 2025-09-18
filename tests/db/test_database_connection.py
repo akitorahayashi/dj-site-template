@@ -1,10 +1,3 @@
-"""
-Database connection tests.
-
-Tests to verify PostgreSQL database connectivity and basic operations.
-"""
-
-
 def test_database_connection_exists(db_connection):
     """Test that we can connect to the PostgreSQL database."""
     assert db_connection is not None
@@ -37,7 +30,8 @@ def test_database_basic_operations(db_connection):
 
         # Insert test data
         cursor.execute(
-            "INSERT INTO test_table (name) VALUES (%s) RETURNING id", ("test_entry",)
+            "INSERT INTO test_table (name) VALUES (%s) RETURNING id",
+            ("test_entry",),
         )
         inserted_id = cursor.fetchone()[0]
 
@@ -77,7 +71,8 @@ def test_database_transaction_rollback(db_connection):
 
         # Start a transaction that we'll rollback
         cursor.execute(
-            "INSERT INTO test_rollback (value) VALUES (%s)", ("should_be_rolled_back",)
+            "INSERT INTO test_rollback (value) VALUES (%s)",
+            ("should_be_rolled_back",),
         )
 
         # Rollback the transaction

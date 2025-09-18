@@ -10,11 +10,11 @@ Before you begin, ensure you have the following tools installed:
 - **Docker Compose**: Included with Docker
 - **Make**: The `make` command should be available
 - **Python**: 3.12 (recommended, see `.python-version`)
-- **Poetry**: 1.8.3 or compatible (for local development)
+- **uv**: Latest version recommended (for local development)
 
 ## Getting Started
 
-To start your new project, clone this repository. Then, to set up the local environment and install dependencies using Poetry, run:
+To start your new project, clone this repository. Then, to set up the local environment and install dependencies using uv, run:
 
 ```bash
 make setup

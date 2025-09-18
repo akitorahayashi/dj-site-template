@@ -1,17 +1,11 @@
-"""
-End-to-end test configuration.
-
-Spins up the entire application stack using testcontainers.
-"""
-
 import os
+import subprocess
 import time
 from pathlib import Path
 
 import pytest
 import requests
 from dotenv import load_dotenv
-from testcontainers.compose import DockerCompose
 
 
 def _is_service_ready(url: str, expected_status: int = 200) -> bool:
@@ -36,30 +30,34 @@ def _wait_for_service(url: str, timeout: int = 120, interval: int = 5) -> None:
 
 
 @pytest.fixture(scope="session")
-def app_container() -> DockerCompose:
+def app_container():
     """
-    Provides a fully running application stack via Docker Compose.
+    Provides a fully running application stack via Docker Compose using subprocess.
     """
     load_dotenv(".env")
-    compose_files = [
-        "docker-compose.yml",
-        "docker-compose.test.override.yml",
-    ]
 
     # Find the project root by looking for a known file, e.g., pyproject.toml
     project_root = Path(__file__).parent.parent.parent
-    [str(project_root / file) for file in compose_files]
 
-    with DockerCompose(
-        context=str(project_root),
-        compose_file_name=compose_files,
-        build=True,
-    ) as compose:
-        # Get the test port from environment variable
-        host_port = os.getenv("TEST_PORT", "8002")
-        # Verify that nginx service is running
-        nginx_container = compose.get_container("nginx")
-        assert nginx_container is not None, "nginx container could not be found."
+    # Get the test port from environment variable
+    host_port = os.getenv("TEST_PORT", "8002")
+
+    # Start Docker Compose services
+    compose_cmd = [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.yml",
+        "-f",
+        "docker-compose.test.override.yml",
+        "up",
+        "-d",
+        "--build",
+    ]
+
+    try:
+        # Start the services
+        subprocess.run(compose_cmd, cwd=project_root, check=True)
 
         # Construct the health check URL
         health_check_url = f"http://localhost:{host_port}/"
@@ -67,13 +65,29 @@ def app_container() -> DockerCompose:
         # Wait for the service to be healthy
         _wait_for_service(health_check_url, timeout=120, interval=5)
 
-        # Add the host port to the container object for access in other fixtures
-        compose.host_port = host_port
-        yield compose
+        # Create a simple object to hold the host port
+        class ComposeInfo:
+            def __init__(self, host_port):
+                self.host_port = host_port
+
+        yield ComposeInfo(host_port)
+
+    finally:
+        # Stop and remove Docker Compose services
+        stop_cmd = [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.yml",
+            "-f",
+            "docker-compose.test.override.yml",
+            "down",
+        ]
+        subprocess.run(stop_cmd, cwd=project_root)
 
 
 @pytest.fixture(scope="session")
-def page_url(app_container: DockerCompose) -> str:
+def page_url(app_container) -> str:
     """
     Returns the base URL of the running application.
     """
