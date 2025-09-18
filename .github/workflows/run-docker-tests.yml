@@ -11,7 +11,7 @@ jobs:
       matrix:
         test_target: [build-test, pstg-test, e2e-test]
     steps:
-      - uses: ./.github/actions/setup/test.yml
+      - uses: ./.github/actions/setup-test-env
 
       - name: Run ${{ matrix.test_target }}
         env:

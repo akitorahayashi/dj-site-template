@@ -11,7 +11,7 @@ jobs:
       matrix:
         test_target: [unit-test, sqlt-test, intg-test]
     steps:
-      - uses: ./.github/actions/setup/test.yml
+      - uses: ./.github/actions/setup-test-env
 
       - name: Run ${{ matrix.test_target }}
         run: make ${{ matrix.test_target }}
