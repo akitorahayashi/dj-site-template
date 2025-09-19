@@ -19,4 +19,4 @@ jobs:
       - name: Run ${{ matrix.test_target }}
         env:
           SUDO: ${{ secrets.SUDO || 'true' }}
-        run: make ${{ matrix.test_target }}
+        run: just ${{ matrix.test_target }}

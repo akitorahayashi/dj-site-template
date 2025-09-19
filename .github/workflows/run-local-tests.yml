@@ -17,4 +17,4 @@ jobs:
       - uses: ./.github/actions/setup-test-env
 
       - name: Run ${{ matrix.test_target }}
-        run: make ${{ matrix.test_target }}
+        run: just ${{ matrix.test_target }}

@@ -8,7 +8,7 @@ Before you begin, ensure you have the following tools installed:
 
 - **Docker**: Latest version recommended
 - **Docker Compose**: Included with Docker
-- **Make**: The `make` command should be available
+- **just**: Command runner, install from https://github.com/casey/just
 - **Python**: 3.12 (recommended, see `.python-version`)
 - **uv**: Latest version recommended (for local development)
 
@@ -17,7 +17,7 @@ Before you begin, ensure you have the following tools installed:
 To start your new project, clone this repository. Then, to set up the local environment and install dependencies using uv, run:
 
 ```bash
-make setup
+just setup
 ```
 This command will also create the necessary `.env` files from the example file.
 
@@ -26,14 +26,14 @@ This command will also create the necessary `.env` files from the example file.
 The application is designed to run inside Docker containers. To build and start the containers in the background, use:
 
 ```bash
-make up
+just up
 ```
 
 Once the containers are running, you can access the application at `http://localhost:8000`.
 
 To stop and remove the containers, run:
 ```bash
-make down
+just down
 ```
 
 ### Production-like Execution
@@ -41,15 +41,15 @@ make down
 To simulate a production environment, you can use a command that starts the containers without the development-specific overrides:
 
 ```bash
-make up-prod
+just up-prod
 ```
 
 > **⚠️ Important**
-> Before running `make up-prod`, you must run `make setup` and configure the production-specific environment variables. The `.env` file is ignored by Git.
+> Before running `just up-prod`, you must run `just setup` and configure the production-specific environment variables. The `.env` file is ignored by Git.
 
 To stop and remove the production-like containers:
 ```bash
-make down-prod
+just down-prod
 ```
 
 ## Testing and Code Quality
@@ -60,13 +60,13 @@ The project is equipped with tools to maintain code quality, including tests, a 
 
 **Local development (fast, lightweight):**
 ```bash
-make test
+just test
 ```
 Runs unit tests, SQLite database tests, and integration tests using Django runserver.
 
 **Production-like testing (comprehensive):**
 ```bash
-make docker-test
+just docker-test
 ```
 Runs Docker build verification, PostgreSQL database tests, and end-to-end tests in containers.
 
@@ -76,12 +76,12 @@ We use `black` and `ruff` to automatically format the code.
 
 To format your code:
 ```bash
-make format
+just format
 ```
 
 To check for linting and formatting issues (as the CI pipeline does):
 ```bash
-make lint
+just lint
 ```
 
 ## Project Structure
