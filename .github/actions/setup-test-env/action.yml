@@ -16,6 +16,9 @@ runs:
     - name: Install dependencies
       run: uv sync --frozen
       shell: bash
+      
+    - name: Install just
+      uses: extractions/setup-just@v2
 
     - name: Create .env file for CI
       run: cp .env.example .env
