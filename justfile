@@ -15,13 +15,14 @@ DEV_COMPOSE  := "docker compose -f docker-compose.yml -f docker-compose.dev.over
 PROD_COMPOSE := "docker compose -f docker-compose.yml --project-name " + PROD_PROJECT_NAME
 TEST_COMPOSE := "docker compose -f docker-compose.yml -f docker-compose.test.override.yml --project-name " + TEST_PROJECT_NAME
 
+# default recipe
+default: help
+
 # Show available recipes
 help:
     @echo "Usage: just [recipe]"
     @echo "Available recipes:"
     @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
-
-default: help
 
 # ==============================================================================
 # Environment Setup
