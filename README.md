@@ -92,3 +92,34 @@ A key feature of this template is how Django apps are organized.
 -   **Namespace Package**: The `apps/` directory is configured as a [PEP 420 namespace package](https://www.python.org/dev/peps/pep-0420/), meaning it does **not** contain an `__init__.py` file. This allows for better separation of concerns and makes it easier to add or remove apps.
 -   **Packaging**: The `pyproject.toml` file is configured to include the entire `apps` directory in the distribution.
 
+## Environment Variables
+
+The following environment variables can be configured in your `.env` file:
+
+### Project Settings
+- `PROJECT_NAME`: Name of the project (default: `dj-site-template`)
+
+### Web Server Settings
+- `HOST_BIND_IP`: IP address to bind the server to (default: `127.0.0.1`)
+- `HOST_PORT`: Port for production server (default: `8000`)
+- `DEV_PORT`: Port for development server (default: `8001`)
+- `TEST_PORT`: Port for test server (default: `8002`)
+
+### Django Configuration
+- `DEBUG`: Enable debug mode (default: `True`)
+- `ALLOWED_HOSTS`: Comma-separated list of allowed hosts (default: `localhost,127.0.0.1`)
+- `SECRET_KEY`: Secret key for Django (required in production)
+- `DJANGO_SETTINGS_MODULE`: Django settings module (default: `config.settings`)
+- `DATABASE_CONN_MAX_AGE`: Database connection max age (default: `0`)
+
+### Database Settings
+- `USE_SQLITE`: Use SQLite database (default: `true`)
+- `POSTGRES_IMAGE_NAME`: PostgreSQL Docker image (default: `postgres:16-alpine`)
+- `POSTGRES_USER`: PostgreSQL username (default: `dj-site-user`)
+- `POSTGRES_PASSWORD`: PostgreSQL password (default: `dj-site-password`)
+- `POSTGRES_HOST`: PostgreSQL host (default: `localhost`)
+- `POSTGRES_PORT`: PostgreSQL port (default: `5432`)
+- `POSTGRES_HOST_DB`: Production PostgreSQL database name (default: `dj-site-template`)
+- `POSTGRES_DEV_DB`: Development PostgreSQL database name (default: `dj-site-template-dev`)
+- `POSTGRES_TEST_DB`: Test PostgreSQL database name (default: `dj-site-template-test`)
+

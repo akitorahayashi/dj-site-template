@@ -10,17 +10,16 @@ services:
       - .env
     environment:
       - DEBUG=True
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DEV_DB_NAME}
-      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
     volumes:
       - .:/app
       - /app/.venv
 
   db:
     environment:
-      - POSTGRES_DB=${POSTGRES_DEV_DB_NAME}
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DEV_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DEV_DB}" ]
 
 volumes:
   postgres-db:

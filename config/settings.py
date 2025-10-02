@@ -96,7 +96,7 @@ else:
     # Build PostgreSQL URL from individual components for safety
     POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-    POSTGRES_HOST = "db"
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "db")
     POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
     POSTGRES_DB = os.getenv("POSTGRES_DB", "dj-site-template-dev")
 
