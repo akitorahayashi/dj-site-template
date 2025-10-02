@@ -117,7 +117,7 @@ The following environment variables can be configured in your `.env` file:
 - `POSTGRES_IMAGE_NAME`: PostgreSQL Docker image (default: `postgres:16-alpine`)
 - `POSTGRES_USER`: PostgreSQL username (default: `dj-site-user`)
 - `POSTGRES_PASSWORD`: PostgreSQL password (default: `dj-site-password`)
-- `POSTGRES_HOST`: PostgreSQL host (default: `localhost`)
+- `POSTGRES_HOST`: PostgreSQL host (default: `db`)
 - `POSTGRES_PORT`: PostgreSQL port (default: `5432`)
 - `POSTGRES_HOST_DB`: Production PostgreSQL database name (default: `dj-site-template`)
 - `POSTGRES_DEV_DB`: Development PostgreSQL database name (default: `dj-site-template-dev`)
